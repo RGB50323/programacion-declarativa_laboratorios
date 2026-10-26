@@ -15,9 +15,12 @@ public class Connection {
                     engine.setTheory(new Theory(in));
         }
     }
-    public String consultar(String predicado, String expresion) throws Exception {
-        SolveInfo info = engine.solve(predicado + "(x, " + expresion + ", R).");
-        return info.isSuccess() ? engine.toString(info.getTerm("R"))
-                : "Sin solución para esa expresión";
+    public String consultar(String predicado, String a, String b) throws Exception {
+        String num = "-?\\d+(\\.\\d+)?";
+        if (!a.matches(num) || !b.matches(num))
+            throw new IllegalArgumentException("escribe solo números");
+        SolveInfo info = engine.solve(predicado + "(" + a + ", " + b + ", R).");
+        return info.isSuccess() ? info.getTerm("R").toString()
+                : "Sin solución (¿división entre 0?)";
     }
 }

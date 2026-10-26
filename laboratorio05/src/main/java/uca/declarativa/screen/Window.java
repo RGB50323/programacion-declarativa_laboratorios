@@ -11,21 +11,19 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 
 public class Window extends JFrame {
-    private static final String[] EJEMPLOS = {
-            "x", "log(x)", "3*x^2", "2^x"
-    };
-    private final TextField txtEntrada = new TextField("Ej: 5*x^2");
+
+    private final TextField txtA = new TextField("Primer número");
+    private final TextField txtB = new TextField("Segundo número");
     private final PanelResult panelResultado = new PanelResult();
     private final JLabel lblEstado = new JLabel(" ");
     public Window(Connection motor) {
-        super("Cálculo simbólico en Prolog");
-        txtEntrada.addActionListener(e -> ejecutar(motor, "d"));
+        super("Calculadora en Prolog");
         JPanel contenido = new JPanel();
         contenido.setLayout(new BoxLayout(contenido, BoxLayout.Y_AXIS));
         contenido.setOpaque(false);
-        agregar(contenido, etiqueta("Función f(x)"), 6);
-        agregar(contenido, txtEntrada, 8);
-        agregar(contenido, crearEjemplos(), 18);
+        agregar(contenido, etiqueta("Números"), 6);
+        agregar(contenido, txtA, 8);
+        agregar(contenido, txtB, 18);
         agregar(contenido, crearBotones(motor), 22);
         agregar(contenido, panelResultado, 10);
         agregar(contenido, crearPie(), 0);
@@ -42,10 +40,10 @@ public class Window extends JFrame {
     }
 
     private JPanel crearEncabezado() {
-        JLabel titulo = new JLabel("Cálculo simbólico");
+        JLabel titulo = new JLabel("Calculadora");
         titulo.setFont(Theme.sans(Font.BOLD, 24));
         titulo.setForeground(Theme.TEXT);
-        JLabel subtitulo = new JLabel("Derivadas e integrales resueltas con reglas en Prolog");
+        JLabel subtitulo = new JLabel("Suma, resta, multiplicación y división resueltas con reglas en Prolog");
                 subtitulo.setFont(Theme.sans(Font.PLAIN, 13));
         subtitulo.setForeground(Theme.MUTED);
         JPanel p = new JPanel();
@@ -56,37 +54,19 @@ public class Window extends JFrame {
         p.add(subtitulo);
         return p;
     }
-    private JPanel crearEjemplos() {
-        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+
+    private JPanel crearBotones(Connection motor) {
+        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         p.setOpaque(false);
-        JLabel lbl = new JLabel("Ejemplos:");
-        lbl.setForeground(Theme.MUTED);
-        lbl.setFont(Theme.sans(Font.PLAIN, 12));
-        p.add(lbl);
-        for (String ej : EJEMPLOS) {
-            Buttons chip = new Buttons(ej, Theme.CARD, Theme.TEXT, 12, 6,
-                    11);
-            chip.addActionListener(e -> {
-                txtEntrada.setText(ej);
-                txtEntrada.requestFocusInWindow();
-            });
-            p.add(chip);
+        String[][] ops = {{"+", "suma"}, {"-", "resta"}, {"×", "multiplicacion"}, {"÷", "division"}};
+        for (String[] op : ops) {
+            Buttons b = new Buttons(op[0], Theme.BLUE, Theme.BG, 26, 11, 14);
+            b.addActionListener(e -> ejecutar(motor, op[1]));
+            p.add(b);
         }
         return p;
     }
-    private JPanel crearBotones(Connection motor) {
-        Buttons btnDerivar = new Buttons("Derivar", Theme.BLUE, Theme.BG,
-                26, 11, 14);
-        Buttons btnIntegrar = new Buttons("Integrar", Theme.GREEN, Theme.BG,
-                26, 11, 14);
-        btnDerivar.addActionListener(e -> ejecutar(motor, "d"));
-        btnIntegrar.addActionListener(e -> ejecutar(motor, "s"));
-        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        p.setOpaque(false);
-        p.add(btnDerivar);
-        p.add(btnIntegrar);
-        return p;
-    }
+
     private JPanel crearPie() {
         lblEstado.setFont(Theme.sans(Font.PLAIN, 12));
         lblEstado.setForeground(Theme.MUTED);
@@ -101,15 +81,16 @@ public class Window extends JFrame {
     }
 
     private void ejecutar(Connection motor, String pred) {
-        String entrada = txtEntrada.getText().trim();
-        String nombre = pred.equals("d") ? "Derivada" : "Integral";
-        panelResultado.setTitulo(nombre + " de f(x)");
-        if (entrada.isEmpty()) {
-            mostrar("", "Escribí una función primero.", Theme.AMBER);
+        String a = txtA.getText().trim();
+        String b = txtB.getText().trim();
+        panelResultado.setTitulo("Resultado de la " + pred);
+
+        if (a.isEmpty() || b.isEmpty()) {
+            mostrar("", "Escribí los dos números primero.", Theme.AMBER);
             return;
         }
         try {
-            String resultado = motor.consultar(pred, entrada);
+            String resultado = motor.consultar(pred, a, b);
             if (resultado.startsWith("Sin solución")) {
                 mostrar("", resultado, Theme.AMBER);
             } else {
